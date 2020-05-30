@@ -16,7 +16,7 @@ class TestApiCOVID19 {
 
         FuelManager.instance.basePath = "https://covid-193.p.rapidapi.com"
         FuelManager.instance.baseHeaders = mapOf("x-rapidapi-host" to "covid-193.p.rapidapi.com",
-            "x-rapidapi-key" to "bc915823d8mshc08e34940d1ec72p191869jsn08922a187a7d", "useQueryString" to "true")
+            "x-rapidapi-key" to "aqui va tu token", "useQueryString" to "true")
     }
 
     @Test
