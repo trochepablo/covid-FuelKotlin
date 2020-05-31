@@ -8,7 +8,8 @@ import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.core.util.RouteOverviewPlugin
 import org.unq.covid19.controller.CountryController
 import org.unq.covid19.model.Country
-import java.time.*
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -20,7 +21,6 @@ class Covid19API(private val port: Int) {
     }
 
     val timer = Timer("schedule", true);
-
 
     fun init(): Javalin {
 
@@ -40,7 +40,7 @@ class Covid19API(private val port: Int) {
         }
 
         // set port
-        app.start(port)
+        app.start(getHerokuAssignedPort())
 
         // routes
         setRoutes(app)
@@ -70,9 +70,6 @@ class Covid19API(private val port: Int) {
 
     private fun setRoutes(app: Javalin) {
         val countryController = CountryController()
-//        val userController = UserController(unqflix, tokenJWT)
-//        val bannerController = BannerController(unqflix)
-//        val searchController = SearchController(unqflix)
 
         app.routes {
             path("getLastData") {
@@ -81,37 +78,6 @@ class Covid19API(private val port: Int) {
             path("getChartLinesData") {
                 ApiBuilder.get(countryController::getChartLinesData)
             }
-//            path("register") {
-//                ApiBuilder.post(userController::createUser, mutableSetOf<Role>(Roles.ANYONE))
-//            }
-//            path("login") {
-//                ApiBuilder.post(userController::loginUser, mutableSetOf<Role>(Roles.ANYONE))
-//            }
-//            path("user") {
-//                path(":id") {
-//                    ApiBuilder.get(userController::getUser, mutableSetOf<Role>(Roles.USER))
-//                }
-//                path("lastSeen") {
-//                    ApiBuilder.post(userController::lastSeen, mutableSetOf<Role>(Roles.USER))
-//                }
-//                path("fav") {
-//                    path(":contentId") {
-//                        ApiBuilder.post(userController::addDelFavorite, mutableSetOf<Role>(Roles.USER))
-//                    }
-//                }
-//            }
-//            path("content") {
-//                ApiBuilder.get(contentController::getContent, mutableSetOf<Role>(Roles.USER))
-//                path(":contentId") {
-//                    ApiBuilder.get(contentController::getContentById, mutableSetOf<Role>(Roles.USER))
-//                }
-//            }
-//            path("banners") {
-//                ApiBuilder.get(bannerController::getBanners, mutableSetOf<Role>(Roles.USER))
-//            }
-//            path("search") {
-//                ApiBuilder.get(searchController::searchByText, mutableSetOf<Role>(Roles.USER))
-//            }
         }
     }
 
@@ -119,45 +85,14 @@ class Covid19API(private val port: Int) {
         app.error(500, "html") { ctx ->
             ctx.html("Internal error")
         }
-//        app.exception(UserNotFoundException::class.java) { e, ctx ->
-//            ctx.status(404)
-//            ctx.json(
-//                mapOf(
-//                    "message" to e.toString()
-//                )
-//            )
-//        }
-//        app.exception(ContentNotFoundException::class.java) { e, ctx ->
-//            ctx.status(404)
-//            ctx.json(mapOf("message" to e.toString()))
-//        }
-//        app.exception(UsernameExistException::class.java) { e, ctx ->
-//            ctx.status(400)
-//            ctx.json(
-//                mapOf(
-//                    "message" to e.toString()
-//                )
-//            )
-//        }
-//        app.exception(NotNullOrEmptyTextParamException::class.java) { e, ctx ->
-//            ctx.status(400)
-//            ctx.json(
-//                mapOf(
-//                    "message" to e.toString()
-//                )
-//            )
-//        }
-//        app.exception(Exception::class.java) { e, ctx ->
-//            ctx.status(500)
-//            ctx.json(
-//                mapOf(
-//                    "message" to e.toString()
-//                )
-//            )
-//        }
     }
 }
 
-fun main() {
-    Covid19API(7000).init()
+fun main(args: Array<String>) {
+    Covid19API(getHerokuAssignedPort()).init()
+}
+
+private fun getHerokuAssignedPort(): Int {
+    val herokuPort = System.getenv("PORT")
+    return herokuPort?.toInt() ?: 7000
 }

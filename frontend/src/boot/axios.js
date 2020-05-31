@@ -2,5 +2,5 @@ import Vue from 'vue'
 import axios from 'axios'
 
 Vue.prototype.$axios = axios.create({
-  baseURL: 'http://localhost:7000/'
+  baseURL: 'https://covid19-unq.herokuapp.com/'
 })
