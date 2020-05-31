@@ -2,6 +2,7 @@ package org.unq.covid19.controller
 
 import io.javalin.http.Context
 import org.unq.covid19.Covid19API.Companion.argentinaHistory
+import java.sql.Timestamp
 
 class CountryController() {
     fun getLastData(ctx: Context) {
@@ -11,7 +12,10 @@ class CountryController() {
 
     fun getChartLinesData(ctx: Context) {
         val lineOfDeaths = argentinaHistory.map { it.Deaths }
-        val lineOfConfirm = argentinaHistory.map { it.Confirmed }
+        val lineOfConfirm = mapOf(
+                "data" to argentinaHistory.map { it.Confirmed },
+                "dates" to argentinaHistory.map { it.getTimestamp() }
+        )
         val lineOfActive = argentinaHistory.map { it.Active }
         val lineOfRecovered = argentinaHistory.map { it.Recovered }
         ctx.json(

@@ -16,27 +16,38 @@ export default {
   data () {
     return {
       options: {
+        title: {
+          text: 'Argentina',
+          align: 'left'
+        },
         chart: {
           id: 'vuechart-example'
         },
         xaxis: {
+          type: 'datetime',
+          title: 'Cantidaed',
           categories: []
         }
       },
-      series: [{
-        name: 'series-1',
-        data: []
-      }]
+      series: []
+    }
+  },
+  methods: {
+    toTimestamp (strDate) {
+      console.log(strDate)
+      var datum = Date.parse(strDate)
+      return datum / 1000
     }
   },
   mounted () {
     this.$axios.get('getChartLinesData')
       .then(response => {
-        this.options.xaxis.categories = response.data.lineOfConfirm
-        this.series = [{
+        this.series.push({
           name: 'infectados-por-dia',
-          data: response.data.lineOfConfirm
-        }]
+          data: response.data.lineOfConfirm.data
+        })
+        console.log(this.toTimestamp(response.data.lineOfConfirm.dates.pop()))
+        this.options.xaxis.categories.push(response.data.lineOfConfirm.dates)
       })
   }
 }
