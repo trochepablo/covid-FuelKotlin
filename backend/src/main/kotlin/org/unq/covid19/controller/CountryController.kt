@@ -11,13 +11,10 @@ class CountryController() {
     }
 
     fun getChartLinesData(ctx: Context) {
-        val lineOfDeaths = argentinaHistory.map { it.Deaths }
-        val lineOfConfirm = mapOf(
-                "data" to argentinaHistory.map { it.Confirmed },
-                "dates" to argentinaHistory.map { it.getTimestamp() }
-        )
-        val lineOfActive = argentinaHistory.map { it.Active }
-        val lineOfRecovered = argentinaHistory.map { it.Recovered }
+        val lineOfDeaths = argentinaHistory.map { arrayOf(it.Date, it.Deaths) }
+        val lineOfConfirm = argentinaHistory.map { arrayOf(it.Date, it.Confirmed) }
+        val lineOfActive = argentinaHistory.map { arrayOf(it.Date, it.Active) }
+        val lineOfRecovered = argentinaHistory.map { arrayOf(it.Date, it.Recovered) }
         ctx.json(
             mapOf(
                 "lineOfDeaths" to lineOfDeaths,

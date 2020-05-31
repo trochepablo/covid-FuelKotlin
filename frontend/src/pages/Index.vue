@@ -1,6 +1,21 @@
 <template>
   <q-page class="flex flex-center">
-      <apexchart width="1000" type="line" :options="options" :series="series"></apexchart>
+    <div>
+      <div class="q-pa-md row items-start q-gutter-md">
+        <q-card class="my-card">
+          <q-card-section>
+            <apexchart width="1000" type="line" :options="options" :series="options.series"></apexchart>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="q-pa-md row items-start q-gutter-md">
+        <q-card class="my-card">
+          <q-card-section>
+            <apexchart width="800" type="pie" :options="chartOptions" :series="totales"></apexchart>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
   </q-page>
 </template>
 
@@ -17,37 +32,65 @@ export default {
     return {
       options: {
         title: {
-          text: 'Argentina',
+          text: 'Historial de casos en Argentina',
           align: 'left'
         },
         chart: {
           id: 'vuechart-example'
         },
         xaxis: {
-          type: 'datetime',
-          title: 'Cantidaed',
-          categories: []
-        }
+          type: 'datetime'
+        },
+        colors: ['#213af2', '#ff7400', '#30d51d', '#e10707'],
+        series: []
       },
-      series: []
-    }
-  },
-  methods: {
-    toTimestamp (strDate) {
-      console.log(strDate)
-      var datum = Date.parse(strDate)
-      return datum / 1000
+      totales: [],
+      chartOptions: {
+        title: {
+          text: 'Totales'
+        },
+        labels: ['Casos activos', 'Recuperados', 'Muertes'],
+        colors: ['#ff7400', '#30d51d', '#e10707'],
+        responsive: [{
+          breakpoint: 480,
+          options: {
+            chart: {
+              width: 200
+            },
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }]
+      }
     }
   },
   mounted () {
     this.$axios.get('getChartLinesData')
       .then(response => {
-        this.series.push({
-          name: 'infectados-por-dia',
-          data: response.data.lineOfConfirm.data
+        this.options.series.push({
+          name: 'Confirmados',
+          data: response.data.lineOfConfirm
         })
-        console.log(this.toTimestamp(response.data.lineOfConfirm.dates.pop()))
-        this.options.xaxis.categories.push(response.data.lineOfConfirm.dates)
+        this.options.series.push({
+          name: 'Casos activos',
+          data: response.data.lineOfActive
+        })
+        this.options.series.push({
+          name: 'Recuperados',
+          data: response.data.lineOfRecovered
+        })
+        this.options.series.push({
+          name: 'Muertes',
+          data: response.data.lineOfDeaths
+        })
+      })
+    this.$axios.get('getLastData')
+      .then(response => {
+        this.totales.push(
+          response.data.active,
+          response.data.recovered,
+          response.data.deaths)
       })
   }
 }
