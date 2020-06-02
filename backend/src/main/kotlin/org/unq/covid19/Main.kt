@@ -1,26 +1,14 @@
 package org.unq.covid19
 
-import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelManager
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder
 import io.javalin.apibuilder.ApiBuilder.path
 import io.javalin.core.util.RouteOverviewPlugin
 import org.unq.covid19.controller.CountryController
-import org.unq.covid19.model.Country
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.util.*
-import kotlin.concurrent.schedule
 
 
 class Covid19API(private val port: Int) {
-    // variable global para acceder al listado
-    companion object {
-        var argentinaHistory: Array<Country> = arrayOf()
-    }
-
-    val timer = Timer("schedule", true);
 
     fun init(): Javalin {
 
@@ -40,7 +28,7 @@ class Covid19API(private val port: Int) {
         }
 
         // set port
-        app.start(getHerokuAssignedPort())
+        app.start(port)
 
         // routes
         setRoutes(app)
@@ -48,23 +36,6 @@ class Covid19API(private val port: Int) {
         // set exception
         setException(app)
 
-        // ejecucion periodica para actualización de datos
-        timer.schedule(0, 50000000) {
-
-            // set date request
-            val desde = "2020-03-03T00:00:00Z"
-            val hasta = LocalDate.now(ZoneOffset.UTC)
-
-            // request to covid-19-fastest
-            val (_, response, result) = Fuel.get(
-                "/country/argentina?from=$desde&to=$hasta"
-            ).also { println(it.url) }
-                // convert to country
-                .responseObject(Country.Deserializer())
-            // list of countrys
-            argentinaHistory = result.component1()!!
-            println(argentinaHistory.size)
-        }
         return app
     }
 
@@ -73,10 +44,10 @@ class Covid19API(private val port: Int) {
 
         app.routes {
             path("getLastData") {
-                ApiBuilder.get(countryController::getLastData)
+                ApiBuilder.post(countryController::getLastData)
             }
             path("getChartLinesData") {
-                ApiBuilder.get(countryController::getChartLinesData)
+                ApiBuilder.post(countryController::getChartLinesData)
             }
         }
     }
