@@ -1,6 +1,18 @@
 <template>
   <q-page class="flex flex-center">
     <div>
+      <div class="q-pa-md items-start row q-gutter-md">
+        <q-select
+          option-value="value"
+          option-label="label"
+          emit-value
+          map-options
+          outlined
+          stack-label
+          @input="getData"
+          v-model="country.country"
+          :options="countrys" label="Paises"/>
+      </div>
       <div class="q-pa-md row items-start q-gutter-md">
         <q-card class="my-card">
           <q-card-section>
@@ -22,6 +34,7 @@
 <script>
 
 import VueApexCharts from 'vue-apexcharts'
+import { Loading } from 'quasar'
 
 export default {
   name: 'PageIndex',
@@ -30,6 +43,14 @@ export default {
   },
   data () {
     return {
+      countrys: [
+        { value: 'argentina', label: 'Argentina' },
+        { value: 'colombia', label: 'Colombia' },
+        { value: 'brazil', label: 'Brasil' }
+      ],
+      country: {
+        country: 'argentina'
+      },
       options: {
         title: {
           text: 'Historial de casos en Argentina',
@@ -65,33 +86,29 @@ export default {
       }
     }
   },
+  methods: {
+    async getChartLinesData () {
+      const response = await this.$axios.post('getChartLinesData', { country: this.country.country })
+      this.options.series.push({ name: 'Confirmados', data: response.data.lineOfConfirm })
+      this.options.series.push({ name: 'Casos activos', data: response.data.lineOfActive })
+      this.options.series.push({ name: 'Recuperados', data: response.data.lineOfRecovered })
+      this.options.series.push({ name: 'Muertes', data: response.data.lineOfDeaths })
+    },
+    async getLastData () {
+      const response = await this.$axios.post('getLastData', { country: this.country.country })
+      this.totales.push(response.data.active, response.data.recovered, response.data.deaths)
+    },
+    async getData () {
+      Loading.show()
+      this.totales = []
+      this.options.series = []
+      await this.getChartLinesData()
+      await this.getLastData()
+      Loading.hide()
+    }
+  },
   mounted () {
-    this.$axios.get('getChartLinesData')
-      .then(response => {
-        this.options.series.push({
-          name: 'Confirmados',
-          data: response.data.lineOfConfirm
-        })
-        this.options.series.push({
-          name: 'Casos activos',
-          data: response.data.lineOfActive
-        })
-        this.options.series.push({
-          name: 'Recuperados',
-          data: response.data.lineOfRecovered
-        })
-        this.options.series.push({
-          name: 'Muertes',
-          data: response.data.lineOfDeaths
-        })
-      })
-    this.$axios.get('getLastData')
-      .then(response => {
-        this.totales.push(
-          response.data.active,
-          response.data.recovered,
-          response.data.deaths)
-      })
+    this.getData()
   }
 }
 </script>
