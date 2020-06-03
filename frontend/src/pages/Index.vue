@@ -1,114 +1,161 @@
 <template>
-  <q-page class="flex flex-center">
+  <q-page class="q-pa-md body--body">
     <div>
-      <div class="q-pa-md items-start row q-gutter-md">
-        <q-select
-          option-value="value"
-          option-label="label"
-          emit-value
-          map-options
-          outlined
-          stack-label
-          @input="getData"
-          v-model="country.country"
-          :options="countrys" label="Paises"/>
-      </div>
-      <div class="q-pa-md row items-start q-gutter-md">
-        <q-card class="my-card">
-          <q-card-section>
-            <apexchart width="1000" type="line" :options="options" :series="options.series"></apexchart>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="q-pa-md row items-start q-gutter-md">
-        <q-card class="my-card">
-          <q-card-section>
-            <apexchart width="800" type="pie" :options="chartOptions" :series="totales"></apexchart>
-          </q-card-section>
-        </q-card>
-      </div>
+      <q-toggle v-model="modeDark" label="Modo oscuro" @input="changeMode" />
     </div>
+    <div class="q-pa-md" style="width: 250px">
+      <q-select
+        option-value="value"
+        option-label="label"
+        emit-value
+        map-options
+        outlined
+        stack-label
+        @input="getData"
+        v-model="country.country"
+        :options="countrys" label="Paises"/>
+    </div>
+    <div class="row q-pa-md">
+        <div class="col">
+          <q-field bg-color="info" standout label="Confirmados" stack-label>
+            <template v-slot:control>
+              <div class="self-center text-weight-bold text-h5 full-width no-outline" tabindex="0">{{formatter(lastData.confirmed)}}</div>
+              <div>
+                <q-icon name="add_circle_outline" style="font-size: 1.2em;"/>
+                {{formatter(lastData.newConfirmed)}}
+              </div>
+            </template>
+          </q-field>
+        </div>
+        <div class="col">
+          <q-field bg-color="orange" standout label="Activos" stack-label>
+            <template v-slot:control>
+              <div class="self-center text-weight-bold text-h5 full-width no-outline" tabindex="0">{{formatter(lastData.active)}}</div>
+              <div>-</div>
+            </template>
+          </q-field>
+        </div>
+        <div class="col">
+          <q-field  bg-color="green" standout label="Recuperados" stack-label>
+            <template v-slot:control>
+              <div class="self-center text-weight-bold text-h5 full-width no-outline" tabindex="0">{{formatter(lastData.recovered)}}</div>
+              <div>
+                <q-icon name="add_circle_outline" style="font-size: 1.2em;"/>
+                {{formatter(lastData.newRecovered)}}
+              </div>
+            </template>
+          </q-field>
+        </div>
+        <div class="col">
+          <q-field bg-color="red" standout label="Muertes" stack-label>
+            <template v-slot:control>
+              <div class="self-center text-weight-bold text-h5 full-width" tabindex="0">{{formatter(lastData.deaths)}}</div>
+              <div>
+                <q-icon name="add_circle_outline" style="font-size: 1.2em;"/>
+                 {{formatter(lastData.newDeaths)}}
+              </div>
+            </template>
+          </q-field>
+        </div>
+    </div>
+    <chartline :key="componentKeyLine" :modeTheme="mode" :seriesChart="series"></chartline>
+    <chartpie :key="componentKeyPie" :modeTheme="mode" :totales="totales"></chartpie>
   </q-page>
 </template>
 
 <script>
 
-import VueApexCharts from 'vue-apexcharts'
-import { Loading } from 'quasar'
+import { Loading, Dark } from 'quasar'
+import ChartPie from '../components/ChartPie.vue'
+import ChartLine from '../components/ChartLine.vue'
 
 export default {
   name: 'PageIndex',
-  components: {
-    apexchart: VueApexCharts
-  },
   data () {
     return {
+      modeDark: true,
+      mode: 'dark',
+      componentKeyPie: 1,
+      componentKeyLine: -1,
+      lastData: {
+        confirmed: 0,
+        active: 0,
+        recovered: 0,
+        deaths: 0,
+        newConfirmed: 0,
+        newRecovered: 0,
+        newDeaths: 0
+      },
       countrys: [
         { value: 'argentina', label: 'Argentina' },
+        { value: 'brazil', label: 'Brasil' },
+        { value: 'chile', label: 'Chile' },
         { value: 'colombia', label: 'Colombia' },
-        { value: 'brazil', label: 'Brasil' }
+        { value: 'ecuador', label: 'Ecuador' },
+        { value: 'paraguay', label: 'Paraguay' },
+        { value: 'peru', label: 'Perú' },
+        { value: 'uruguay', label: 'Uruguay' },
+        { value: 'venezuela', label: 'Venezuela' }
       ],
       country: {
         country: 'argentina'
       },
-      options: {
-        title: {
-          text: 'Historial de casos en Argentina',
-          align: 'left'
-        },
-        chart: {
-          id: 'vuechart-example'
-        },
-        xaxis: {
-          type: 'datetime'
-        },
-        colors: ['#213af2', '#ff7400', '#30d51d', '#e10707'],
-        series: []
-      },
+      series: [],
       totales: [],
-      chartOptions: {
-        title: {
-          text: 'Totales'
-        },
-        labels: ['Casos activos', 'Recuperados', 'Muertes'],
-        colors: ['#ff7400', '#30d51d', '#e10707'],
-        responsive: [{
-          breakpoint: 480,
-          options: {
-            chart: {
-              width: 200
-            },
-            legend: {
-              position: 'bottom'
-            }
-          }
-        }]
-      }
+      modeTheme: 'dark'
     }
+  },
+  components: {
+    chartpie: ChartPie,
+    chartline: ChartLine
   },
   methods: {
     async getChartLinesData () {
       const response = await this.$axios.post('getChartLinesData', { country: this.country.country })
-      this.options.series.push({ name: 'Confirmados', data: response.data.lineOfConfirm })
-      this.options.series.push({ name: 'Casos activos', data: response.data.lineOfActive })
-      this.options.series.push({ name: 'Recuperados', data: response.data.lineOfRecovered })
-      this.options.series.push({ name: 'Muertes', data: response.data.lineOfDeaths })
+      this.series.push({ name: 'Confirmados', data: response.data.lineOfConfirm })
+      this.series.push({ name: 'Casos activos', data: response.data.lineOfActive })
+      this.series.push({ name: 'Recuperados', data: response.data.lineOfRecovered })
+      this.series.push({ name: 'Muertes', data: response.data.lineOfDeaths })
+
+      this.lastData.newConfirmed = response.data.lineOfConfirm[response.data.lineOfConfirm.length - 1][1] - response.data.lineOfConfirm[response.data.lineOfConfirm.length - 2][1]
+      this.lastData.newRecovered = response.data.lineOfRecovered[response.data.lineOfRecovered.length - 1][1] - response.data.lineOfRecovered[response.data.lineOfRecovered.length - 2][1]
+      this.lastData.newDeaths = response.data.lineOfDeaths[response.data.lineOfDeaths.length - 1][1] - response.data.lineOfDeaths[response.data.lineOfDeaths.length - 2][1]
     },
     async getLastData () {
       const response = await this.$axios.post('getLastData', { country: this.country.country })
       this.totales.push(response.data.active, response.data.recovered, response.data.deaths)
+      this.lastData.confirmed = response.data.confirmed
+      this.lastData.active = response.data.active
+      this.lastData.recovered = response.data.recovered
+      this.lastData.deaths = response.data.deaths
     },
     async getData () {
       Loading.show()
       this.totales = []
-      this.options.series = []
+      this.series = []
       await this.getChartLinesData()
       await this.getLastData()
       Loading.hide()
+    },
+    changeMode (newValue) {
+      this.mode = newValue ? 'dark' : ''
+      this.mode = newValue ? 'dark' : ''
+      Dark.set(newValue)
+      this.componentKeyPie += 1
+      this.componentKeyLine -= 1
+    },
+    formatter (x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')
     }
   },
   mounted () {
+    Dark.set(true)
     this.getData()
   }
 }
 </script>
+<style scoped>
+.body--body{
+  min-width: 540px;
+}
+</style>
